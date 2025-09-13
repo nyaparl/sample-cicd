@@ -1,31 +1,41 @@
-name: Sample CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "**" ]   # runs on any branch
+    branches: [ "**" ]
   pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      # Step 2: Setup Python
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.x'
 
-      # Step 3: Install dependencies (none for now)
-      - name: Install dependencies
-        run: pip install pytest
-
-      # Step 4: Run tests (sample)
-      - name: Run sample tests
+      - name: Run Python Hello
         run: |
           echo "Running CI pipeline..."
-          python hello.py || true
+          python -c "import hello; print(hello.handler())"
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: List S3 Buckets
+        run: aws s3 ls
+
+      - name: List Lambda Functions
+        run: aws lambda list-functions --query 'Functions[*].FunctionName' --output table
+
+      - name: List Glue Jobs
+        run: aws glue list-jobs --output table
